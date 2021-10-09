@@ -9,10 +9,10 @@
 
 class EJDBPP;
 
-
 class EJDBQuery
 {
-friend class EJDBPP;
+    friend class EJDBPP;
+
 private:
     JQL m_q;
     std::string m_query;
@@ -34,18 +34,18 @@ public:
 
     cpp::result<int64_t, EJDBQueryError> limit();
 
-    EJDBQuery(const std::string &collection,const std::string &query);
+    EJDBQuery(const std::string &collection, const std::string &query);
 
     EJDBQueryError init();
 
     template <typename T>
     EJDBQueryError setPlaceholder(const std::string &placeholder, int index, const T &val)
-    {            std::cout << "set" << std::endl;
+    {
+        std::cout << "set" << std::endl;
 
-        if constexpr(std::is_same<T, int64_t>::value)
+        if constexpr (std::is_same<T, int64_t>::value)
         {
             iwrc rc = jql_set_i64(m_q, placeholder.c_str(), index, val);
-            std::cout << "set2" << std::endl;
             if (rc)
             {
                 iwlog_ecode_error3(rc);
@@ -53,7 +53,8 @@ public:
             }
             return EJDBQueryError::None;
         }
-        else if constexpr(std::is_same<T, bool>::value){
+        else if constexpr (std::is_same<T, bool>::value)
+        {
             iwrc rc = jql_set_bool(m_q, placeholder.c_str(), index, val);
             if (rc)
             {
@@ -62,13 +63,25 @@ public:
             }
             return EJDBQueryError::None;
         }
-        else if constexpr(std::is_same<T, bool> ::value) {
+        else if constexpr (std::is_same<T, char *>::value)
+        {
             iwrc rc = jql_set_str(m_q, placeholder.c_str(), index, val);
-            if (rc) {
+            if (rc)
+            {
 
                 iwlog_ecode_error3(rc);
                 return EJDBQueryError::FailedToSetPlaceholder;
+            }
+            return EJDBQueryError::None;
+        }
+        else if constexpr (std::is_same<T, _Float64>::value)
+        {
+            iwrc rc = jql_set_f64(m_q, placeholder.c_str(), index, val);
 
+            if (rc)
+            {
+                iwlog_ecode_error3(rc);
+                return EJDBQueryError::FailedToSetPlaceholder;
             }
             return EJDBQueryError::None;
         }
@@ -77,8 +90,6 @@ public:
             static_assert("Unsupported Placeholder Type.");
             return EJDBQueryError::UnsupportedPlaceholderType;
         }
-
-        
     }
 
     EJDBQueryError setPlaceholderJSON(const std::string &placeholder, int index, const std::string &val);
@@ -86,7 +97,6 @@ public:
     EJDBQueryError setRegexp(const std::string &placeholder, int index, const std::string &regexp);
 
     EJDBQueryError setNull(const std::string &placeholder, int index);
-
 };
 
 #endif

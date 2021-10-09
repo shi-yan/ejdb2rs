@@ -36,7 +36,7 @@ EJDBPP::EJDBError EJDBPP::close()
     return EJDBPP::EJDBError::None;
 }
 
-cpp::result<int64_t, EJDBPP::EJDBError> EJDBPP::put(const std::string &collection, const std::string &json)
+cpp::result<int64_t, EJDBPP::EJDBError> EJDBPP::putNew(const std::string &collection, const std::string &json)
 {
     JBL jbl = 0;
     iwrc rc = jbl_from_json(&jbl, json.c_str());

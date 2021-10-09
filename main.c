@@ -17,7 +17,7 @@ int main() {
   EJDB_OPTS opts = {
     .kv = {
       .path = "example.db",
-   //   .oflags = IWKV_TRUNC
+      .oflags = 0
     }
   };
   EJDB db;     // EJDB2 storage handle
