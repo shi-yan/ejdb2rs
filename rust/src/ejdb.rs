@@ -1,9 +1,112 @@
 extern crate ejdb_sys;
 
 use ejdbquery::EJDBQuery;
+use ejdbquery::EJDBSerializable;
 
 pub struct EJDB {
     db: ejdb_sys::EJDB
+}
+
+impl EJDBSerializable<String> for &str {
+    fn from_jbl(jbl: ejdb_sys::JBL) -> Result<String, ejdb_sys::iwrc>
+    {
+        let xstr = unsafe { ejdb_sys::iwxstr_new() };
+
+        let rc5 = unsafe {
+            ejdb_sys::jbl_as_json(
+                jbl,
+                Some(ejdb_sys::jbl_xstr_json_printer),
+                xstr as *mut ::std::os::raw::c_void,
+                1,
+            )
+        };
+
+        if rc5 != 0 {
+            println!("failed to convert json to str {}", rc5);
+            unsafe {
+                ejdb_sys::iwxstr_destroy(xstr);
+            };
+            return Err(rc5);
+        }
+
+        let str2 = unsafe {
+            std::ffi::CStr::from_ptr(ejdb_sys::iwxstr_ptr(xstr))
+                .to_str()
+                .unwrap()
+        };
+
+        let result = String::from(str2);
+        unsafe {
+            ejdb_sys::iwxstr_destroy(xstr);
+        };
+
+        return Ok(result);
+    }
+
+    fn to_jbl(&self) -> Result<ejdb_sys::JBL, ejdb_sys::iwrc > 
+    {
+        let mut jbl: ejdb_sys::JBL = std::ptr::null_mut();
+        let json = std::ffi::CString::new(*self).unwrap();
+        let rc3 = unsafe { ejdb_sys::jbl_from_json(&mut jbl, json.as_ptr()) };
+
+        if rc3 != 0 {
+            println!("json error: {}", EJDB::err_to_str(rc3));
+            unsafe { ejdb_sys::jbl_destroy(&mut jbl) };
+            return Err(rc3);
+        }
+        return Ok(jbl);
+    }
+}
+
+impl EJDBSerializable<String> for String {
+    fn from_jbl(jbl: ejdb_sys::JBL) -> Result<String, ejdb_sys::iwrc>
+    {
+        let xstr = unsafe { ejdb_sys::iwxstr_new() };
+
+        let rc5 = unsafe {
+            ejdb_sys::jbl_as_json(
+                jbl,
+                Some(ejdb_sys::jbl_xstr_json_printer),
+                xstr as *mut ::std::os::raw::c_void,
+                1,
+            )
+        };
+
+        if rc5 != 0 {
+            println!("failed to convert json to str {}", rc5);
+            unsafe {
+                ejdb_sys::iwxstr_destroy(xstr);
+            };
+            return Err(rc5);
+        }
+
+        let str2 = unsafe {
+            std::ffi::CStr::from_ptr(ejdb_sys::iwxstr_ptr(xstr))
+                .to_str()
+                .unwrap()
+        };
+
+        let result = String::from(str2);
+        unsafe {
+            ejdb_sys::iwxstr_destroy(xstr);
+        };
+
+        return Ok(result);
+    }
+
+    fn to_jbl(&self) -> Result<ejdb_sys::JBL, ejdb_sys::iwrc > 
+    {
+        let mut jbl: ejdb_sys::JBL = std::ptr::null_mut();
+        let json = std::ffi::CString::new(self.as_str()).unwrap();
+        let rc3 = unsafe { ejdb_sys::jbl_from_json(&mut jbl, json.as_ptr()) };
+
+        if rc3 != 0 {
+            println!("json error: {}", EJDB::err_to_str(rc3));
+            unsafe { ejdb_sys::jbl_destroy(&mut jbl) };
+            return Err(rc3);
+        }
+        return Ok(jbl);
+    }
 }
 
 impl Drop for EJDB {
@@ -116,16 +219,15 @@ impl EJDB {
         rc
     }
 
-    pub fn put_new(&self, collection: &str, json_str: &str) -> Result<i64, ejdb_sys::iwrc> {
-        let mut jbl: ejdb_sys::JBL = std::ptr::null_mut();
-        let json = std::ffi::CString::new(json_str).unwrap();
-        let rc3 = unsafe { ejdb_sys::jbl_from_json(&mut jbl, json.as_ptr()) };
+    pub fn put_new<I: EJDBSerializable<O>, O >(&self, collection: &str, json_str: &I) -> Result<i64, ejdb_sys::iwrc> {
+        let mut jbl: ejdb_sys::JBL = match json_str.to_jbl() {
+            Result::Ok(val) => val,
+            Result::Err(err) => {
+                println!("json error: {}", EJDB::err_to_str(err));
+                return Err(err);
+            }
+        };
 
-        if rc3 != 0 {
-            println!("json error: {}", EJDB::err_to_str(rc3));
-            unsafe { ejdb_sys::jbl_destroy(&mut jbl) };
-            return Err(rc3);
-        }
         let mut id: i64 = 0;
         let rc4 = unsafe {
             ejdb_sys::ejdb_put_new(
@@ -154,20 +256,27 @@ impl EJDB {
         rc
     }
 
-    pub fn patch(&self, collection: &str, json_str: &str, id: i64) -> ejdb_sys::iwrc {
+    pub fn patch<I: EJDBSerializable<O>, O >(&self, collection: &str, json_str: &I, id: i64) -> ejdb_sys::iwrc {
         let collection_str = std::ffi::CString::new(collection).unwrap();
-        let json = std::ffi::CString::new(json_str).unwrap();
+        let mut jbl: ejdb_sys::JBL = match json_str.to_jbl() {
+            Result::Ok(val) => val,
+            Result::Err(err) => {
+                println!("json error: {}", EJDB::err_to_str(err));
+                return err;
+            }
+        };
 
         let rc =
-            unsafe { ejdb_sys::ejdb_patch(self.db, collection_str.as_ptr(), json.as_ptr(), id) };
+            unsafe { ejdb_sys::ejdb_patch_jbl(self.db, collection_str.as_ptr(),jbl, id) };
 
         if rc != 0 {
             println!("failed to patch {} {}", id, rc);
         }
+        unsafe {ejdb_sys::jbl_destroy(&mut jbl)};
         rc
     }
 
-    pub fn get(&self, collection: &str, id: i64) -> Result<String, ejdb_sys::iwrc> {
+    pub fn get< O :EJDBSerializable <O> >(&self, collection: &str, id: i64) -> Result<O, ejdb_sys::iwrc> {
         let mut jbl: ejdb_sys::JBL = std::ptr::null_mut();
         let collection_str = std::ffi::CString::new(collection).unwrap();
         let rc = unsafe { ejdb_sys::ejdb_get(self.db, collection_str.as_ptr(), id, &mut jbl) };
@@ -179,42 +288,21 @@ impl EJDB {
             return Err(0);
         }
 
-        let xstr = unsafe { ejdb_sys::iwxstr_new() };
-
-        let rc5 = unsafe {
-            ejdb_sys::jbl_as_json(
-                jbl,
-                Some(ejdb_sys::jbl_xstr_json_printer),
-                xstr as *mut ::std::os::raw::c_void,
-                1,
-            )
+        let result:O = match <O>::from_jbl(jbl) {
+            Result::Ok(val) => {
+                unsafe { ejdb_sys::jbl_destroy(&mut jbl) };
+                val
+            },
+            Result::Err(err) => {
+                unsafe { ejdb_sys::jbl_destroy(&mut jbl) };
+                return Err(err);
+            }
         };
-
-        if rc5 != 0 {
-            println!("failed to convert json to str {}", rc5);
-            unsafe {
-                ejdb_sys::iwxstr_destroy(xstr);
-                ejdb_sys::jbl_destroy(&mut jbl)
-            };
-            return Err(rc5);
-        }
-
-        let str2 = unsafe {
-            std::ffi::CStr::from_ptr(ejdb_sys::iwxstr_ptr(xstr))
-                .to_str()
-                .unwrap()
-        };
-
-        let result = String::from(str2);
-        unsafe {
-            ejdb_sys::iwxstr_destroy(xstr);
-            ejdb_sys::jbl_destroy(&mut jbl)
-        };
-
+        
         Ok(result)
     }
 
-    pub fn info(&self) -> Result<String, ejdb_sys::iwrc> {
+    pub fn info< O :EJDBSerializable <O> >(&self) -> Result<O, ejdb_sys::iwrc> {
         let mut jbl2: ejdb_sys::JBL = std::ptr::null_mut();
 
         let rc4 = unsafe { ejdb_sys::ejdb_get_meta(self.db, &mut jbl2) };
@@ -225,37 +313,17 @@ impl EJDB {
             return Err(rc4);
         }
 
-        let xstr = unsafe { ejdb_sys::iwxstr_new() };
-
-        let rc5 = unsafe {
-            ejdb_sys::jbl_as_json(
-                jbl2,
-                Some(ejdb_sys::jbl_xstr_json_printer),
-                xstr as *mut ::std::os::raw::c_void,
-                1,
-            )
+        let result:O = match <O>::from_jbl(jbl2) {
+            Result::Ok(val) => {
+                unsafe { ejdb_sys::jbl_destroy(&mut jbl2) };
+                val
+            },
+            Result::Err(err) => {
+                unsafe { ejdb_sys::jbl_destroy(&mut jbl2) };
+                return Err(err);
+            }
         };
-        if rc5 != 0 {
-            println!("failed to convert json to str {}", rc5);
-            unsafe {
-                ejdb_sys::iwxstr_destroy(xstr);
-                ejdb_sys::jbl_destroy(&mut jbl2)
-            };
-            return Err(rc5);
-        }
-
-        let str2 = unsafe {
-            std::ffi::CStr::from_ptr(ejdb_sys::iwxstr_ptr(xstr))
-                .to_str()
-                .unwrap()
-        };
-
-        let result = String::from(str2);
-
-        unsafe {
-            ejdb_sys::iwxstr_destroy(xstr);
-            ejdb_sys::jbl_destroy(&mut jbl2)
-        };
+       
         Ok(result)
     }
 

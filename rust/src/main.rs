@@ -1,6 +1,6 @@
 mod ejdb;
 mod ejdbquery;
-use ejdbquery::SetPlaceholder;
+use ejdbquery::{SetPlaceholder, EJDBSerializable};
 
 fn main() {
     ejdb::EJDB::init();
@@ -8,13 +8,13 @@ fn main() {
 
     db.open(&String::from("test.db"));
 
-    db.put_new(&String::from("test"),&String::from("{\"test\":32}")).unwrap();
+    db.put_new(&String::from("test").as_str(),&String::from("{\"test\":32}").as_str()).unwrap();
 
-    let meta = db.info().unwrap();
+    let meta:String = db.info().unwrap();
 
     println!("db meta {}", meta);
 
-    let result = db.get(&String::from("test"), 1).unwrap();
+    let result:String = db.get(&String::from("test"), 1).unwrap();
 
     println!("get {}, {}",1, result);
 

@@ -1,5 +1,12 @@
 extern crate ejdb_sys;
 
+
+pub trait EJDBSerializable<T> {
+    fn from_jbl(jbl: ejdb_sys::JBL) -> Result<T, ejdb_sys::iwrc> ;
+
+    fn to_jbl(&self) -> Result<ejdb_sys::JBL, ejdb_sys::iwrc>;
+}
+
 pub struct EJDBQuery {
     pub(crate) q: ejdb_sys::JQL,
     query: String,
