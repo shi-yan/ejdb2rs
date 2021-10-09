@@ -430,12 +430,11 @@ impl EJDB {
         return Ok(ts);
     }
 
-    pub fn exec(
+    pub fn exec< O :EJDBSerializable <O> >(
         &self,
         q: &EJDBQuery, 
-        mut f: fn(*mut ejdb_sys::_EJDB_EXEC, ejdb_sys::EJDB_DOC, *mut i64) -> ejdb_sys::iwrc,
+        mut f: fn(doc: O) -> ejdb_sys::iwrc,
     ) -> ejdb_sys::iwrc {
-        //let collection_str = std::ffi::CString::new("test").unwrap();
 
         let callback_ptr: *mut std::ffi::c_void = &mut f as *mut _ as *mut std::ffi::c_void;
 
@@ -447,7 +446,7 @@ impl EJDB {
             opaque: callback_ptr,
             pool: std::ptr::null_mut(),
             skip: 0,
-            visitor: Some(document_visitor),
+            visitor: Some(document_visitor::<O>),
             q: q.q,
         };
 
@@ -461,34 +460,24 @@ impl EJDB {
     }
 }
 
-unsafe extern "C" fn document_visitor(
+unsafe extern "C" fn document_visitor< O :EJDBSerializable <O> >(
     ctx: *mut ejdb_sys::_EJDB_EXEC,
     doc: ejdb_sys::EJDB_DOC,
     step: *mut i64,
 ) -> ejdb_sys::iwrc {
-    let xstr = ejdb_sys::iwxstr_new();
 
-    let rc5 = ejdb_sys::jbl_as_json(
-        (*doc).raw,
-        Some(ejdb_sys::jbl_xstr_json_printer),
-        xstr as *mut ::std::os::raw::c_void,
-        1,
-    );
-    if rc5 != 0 {
-        println!("failed to convert json to str {}", rc5);
+    let result:O = match <O>::from_jbl((*doc).raw) {
+        Result::Ok(val) => {
+            val
+        },
+        Result::Err(err) => {
+            return err;
+        }
+    };
 
-        ejdb_sys::iwxstr_destroy(xstr);
-        return rc5;
-    }
-
-    let str2 = std::ffi::CStr::from_ptr(ejdb_sys::iwxstr_ptr(xstr))
-        .to_str()
-        .unwrap();
-
-    let data: &mut fn(*mut ejdb_sys::_EJDB_EXEC, ejdb_sys::EJDB_DOC, *mut i64) -> ejdb_sys::iwrc =
+    let data: &mut fn(O) -> ejdb_sys::iwrc =
         &mut *((*ctx).opaque
-            as *mut fn(*mut ejdb_sys::_EJDB_EXEC, ejdb_sys::EJDB_DOC, *mut i64) -> ejdb_sys::iwrc);
+            as *mut fn(O) -> ejdb_sys::iwrc);
 
-    println!("test called {}", str2);
-    return data(ctx, doc, step);
+    return data(result);
 }

@@ -23,8 +23,8 @@ fn main() {
 
     query.set_placeholder("age", 0, 3 as i64);
 
-    db.exec(&query, |ctx:*mut ejdb_sys::_EJDB_EXEC, doc: ejdb_sys::EJDB_DOC, step: *mut i64| -> ejdb_sys::iwrc{
-        println!("in callback");
+    db.exec(&query, |doc: String| -> ejdb_sys::iwrc{
+        println!("in callback {}", doc);
         0
     });
 
