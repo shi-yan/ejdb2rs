@@ -1,12 +1,12 @@
 [package]
-name = "ejdb-sys"
-version = "0.3.0"
-authors = ["Vladimir Matveev <vladimir.matweev@gmail.com>"]
-repository = "https://github.com/netvl/ejdb.rs"
-description = "Native bindings for libejdb"
+name = "ejdb2-sys"
+version = "2.61.0"
+authors = ["Shi Yan <billconan@gmail.com>"]
+repository = "https://github.com/shi-yan/ejdb2rs/tree/master/rust/ejdb-sys"
+description = "Rust binding for EJDB2"
 keywords = ["ejdb", "database", "ffi"]
 license = "MIT"
-links = "ejdb"
+links = "ejdb2"
 build = "build.rs"
 
 [build-dependencies]
