@@ -3,16 +3,11 @@ name = "ejdb2"
 version = "0.0.1"
 authors = ["Shi Yan <billconan@gmail.com>"]
 description = "Bindings for EJDB2, an single file embedded no-sql database"
-repository = "https://github.com/netvl/ejdb.rs"
-documentation = "https://netvl.github.io/ejdb.rs/"
+repository = "https://github.com/shi-yan/ejdb2rs"
+documentation = "https://github.com/shi-yan/ejdb2rs"
 readme = "Readme.md"
 keywords = ["ejdb2", "database", "json", "bson", "ffi"]
 license = "MIT"
-include = [
-    "Cargo.toml",
-    "src/*.rs",
-    "ejdb-sys/Cargo.toml",
-]
 
 [badges]
 maintenance = { status = "looking-for-maintainer" }
@@ -21,7 +16,7 @@ maintenance = { status = "looking-for-maintainer" }
 name = "ejdb2"
 
 [dependencies]
-ejdb-sys = { path = "ejdb-sys", version = "0.3" }
+ejdb2-sys = "2.61.0"
 serde_json = "1.0"
 scopeguard = "1.1.0"
 

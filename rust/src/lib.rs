@@ -1,5 +1,5 @@
 
-extern crate ejdb_sys;
+extern crate ejdb2_sys;
 extern crate serde_json;
 
 mod ejdb;
@@ -43,7 +43,7 @@ mod tests {
         query.set_placeholder("limit", 0, 3 as i64).unwrap();
         query.set_placeholder("skip", 0, 3 as i64).unwrap();
     
-        db.exec(&query, |id: i64, doc: String| -> ejdb_sys::iwrc{
+        db.exec(&query, |id: i64, doc: String| -> ejdb2_sys::iwrc{
             println!("in callback {} {}",id, doc);
             0
         }).unwrap();
