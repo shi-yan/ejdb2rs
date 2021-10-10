@@ -6,7 +6,7 @@
 
 ```toml
 [dependencies]
-ejdb2 = "0.0.1"
+ejdb2 = "0.0.2"
 ```
 
 ## Example

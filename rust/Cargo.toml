@@ -1,6 +1,6 @@
 [package]
 name = "ejdb2"
-version = "0.0.1"
+version = "0.0.2"
 authors = ["Shi Yan <billconan@gmail.com>"]
 description = "Bindings for EJDB2, an single file embedded no-sql database"
 repository = "https://github.com/shi-yan/ejdb2rs"
