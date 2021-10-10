@@ -46,7 +46,7 @@ int main() {
   jbl_destroy(&jbl);
 
   // Now execute a query
-  rc =  jql_create(&q, "parrots", "/[age > :age]");
+  rc =  jql_create(&q, "parrots", "@parrots/** > :age");
   RCGO(rc, finish);
 
   EJDB_EXEC ux = {

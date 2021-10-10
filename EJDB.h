@@ -47,6 +47,8 @@ public:
 
   cpp::result<int64_t, EJDBError> putNew(const std::string &collection, const std::string &json);
 
+  EJDBPP::EJDBError put(const std::string &collection, const std::string &json, uint64_t id);
+
   EJDBPP::EJDBError patch(const std::string &collection, const std::string &json, uint64_t id);
 
   cpp::result<std::string, EJDBPP::EJDBError> get(const std::string &collection, uint64_t id);

@@ -1,4 +1,4 @@
-extern crate bson;
+
 extern crate ejdb_sys;
 use ejdb_sys::ejdb_init;
 

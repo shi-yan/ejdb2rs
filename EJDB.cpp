@@ -58,12 +58,35 @@ cpp::result<int64_t, EJDBPP::EJDBError> EJDBPP::putNew(const std::string &collec
     return id;
 }
 
+EJDBPP::EJDBError EJDBPP::put(const std::string &collection, const std::string &json, uint64_t id)
+{
+    JBL jbl = 0;
+    iwrc rc = jbl_from_json(&jbl, json.c_str());
+    if (rc)
+    {
+        iwlog_ecode_error3(rc);
+        jbl_destroy(&jbl);
+        return EJDBPP::EJDBError::JSONParsingError;
+    }
+
+    rc = ejdb_put(m_db, collection.c_str(), jbl, id);
+    jbl_destroy(&jbl);
+    if (rc)
+    {
+        iwlog_ecode_error3(rc);
+        return EJDBPP::EJDBError::FailedToPut;
+    }
+
+    return EJDBPP::EJDBError::None;
+}
+
 EJDBPP::EJDBError EJDBPP::patch(const std::string &collection, const std::string &json, uint64_t id)
 {
 
     iwrc rc = ejdb_patch(m_db, collection.c_str(), json.c_str(), id);
 
-    if (rc) {
+    if (rc)
+    {
         iwlog_ecode_error3(rc);
         return EJDBError::FailedToPatch;
     }
@@ -232,7 +255,7 @@ static iwrc documents_visitor(EJDB_EXEC *ctx, const EJDB_DOC doc, int64_t *step)
     std::function<iwrc(EJDB_EXEC *, const EJDB_DOC, int64_t *)> *functor = (std::function<iwrc(EJDB_EXEC *, const EJDB_DOC, int64_t *)> *)ctx->opaque;
 
     return (*functor)(ctx, doc, step);
-  //return 0;
+    //return 0;
 }
 
 EJDBPP::EJDBError EJDBPP::exec(const EJDBQuery &q, std::function<iwrc(EJDB_EXEC *, const EJDB_DOC, int64_t *)> callback)
@@ -242,8 +265,7 @@ EJDBPP::EJDBError EJDBPP::exec(const EJDBQuery &q, std::function<iwrc(EJDB_EXEC 
         .db = m_db,
         .q = q.m_q,
         .visitor = documents_visitor,
-        .opaque = (void *)&callback
-     };
+        .opaque = (void *)&callback};
 
     iwrc rc = ejdb_exec(&ux); // Execute query
 

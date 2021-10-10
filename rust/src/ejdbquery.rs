@@ -14,7 +14,7 @@ pub struct EJDBQuery {
 }
 
 pub trait SetPlaceholder<T> {
-    fn set_placeholder(&self, placeholder: &str, index: i32, val: T) -> ejdb_sys::iwrc;
+    fn set_placeholder(&self, placeholder: &str, index: i32, val: T) -> Result<(), ejdb_sys::iwrc>;
 }
 
 impl EJDBQuery {
@@ -26,7 +26,7 @@ impl EJDBQuery {
         }
     }
 
-    pub fn init(&mut self) -> ejdb_sys::iwrc {
+    pub fn init(&mut self) -> Result<(), ejdb_sys::iwrc> {
         let collection_str = std::ffi::CString::new(self.collection.as_str()).unwrap();
         let query_str = std::ffi::CString::new(self.query.as_str()).unwrap();
         let rc = unsafe {
@@ -36,8 +36,9 @@ impl EJDBQuery {
         if rc != 0 {
             unsafe { ejdb_sys::jql_destroy(&mut self.q) };
             self.q = std::ptr::null_mut();
+            return Err(rc);
         }
-        return rc;
+        Ok(())
     }
 
     pub fn limit(&self) -> Result<i64, ejdb_sys::iwrc> {
@@ -51,7 +52,7 @@ impl EJDBQuery {
         return Ok(out);
     }
 
-    pub fn set_placeholder_json(&self, placeholder: &str, index: i32, val: &str) -> ejdb_sys::iwrc {
+    pub fn set_placeholder_json(&self, placeholder: &str, index: i32, val: &str) -> Result<(), ejdb_sys::iwrc> {
         let mut jbl: ejdb_sys::JBL = std::ptr::null_mut();
         let value_str = std::ffi::CString::new(val).unwrap();
 
@@ -59,7 +60,7 @@ impl EJDBQuery {
         if rc != 0 {
             println!("can't convert str to json {}", rc);
             unsafe { ejdb_sys::jbl_destroy(&mut jbl) };
-            return rc;
+            return Err(rc);
         }
         let placeholder_str = std::ffi::CString::new(placeholder).unwrap();
 
@@ -67,12 +68,14 @@ impl EJDBQuery {
             unsafe { ejdb_sys::jql_set_json_jbl(self.q, placeholder_str.as_ptr(), index, jbl) };
         if rc2 != 0 {
             println!("failed to set placeholder {} to json {}", placeholder, rc);
+            unsafe { ejdb_sys::jbl_destroy(&mut jbl) };
+            return Err(rc2);    
         }
         unsafe { ejdb_sys::jbl_destroy(&mut jbl) };
-        rc2
+        Ok(())
     }
 
-    pub fn setRegexp(&self, placeholder: &str, index: i32, regexp: &str) -> ejdb_sys::iwrc {
+    pub fn set_regexp(&self, placeholder: &str, index: i32, regexp: &str) -> Result<(), ejdb_sys::iwrc> {
         let placeholder_str = std::ffi::CString::new(placeholder).unwrap();
         let regexp_str = std::ffi::CString::new(regexp).unwrap();
 
@@ -82,62 +85,67 @@ impl EJDBQuery {
 
         if rc != 0 {
             println!("failed to set placeholder {} to regexp {}", placeholder, rc);
+            return Err(rc);
         }
-        rc
+        Ok(())
     }
 
-    pub fn setNull(&self, placeholder: &str, index: i32) -> ejdb_sys::iwrc {
+    pub fn set_null(&self, placeholder: &str, index: i32) -> Result<(), ejdb_sys::iwrc> {
         let placeholder_str = std::ffi::CString::new(placeholder).unwrap();
 
         let rc = unsafe { ejdb_sys::jql_set_null(self.q, placeholder_str.as_ptr(), index) };
         if rc != 0 {
             println!("failed to set placeholder {} to null {}", placeholder, rc);
+            return Err(rc);
         }
-        rc
+        Ok(())
     }
 }
 
 impl SetPlaceholder<i64> for EJDBQuery {
-    fn set_placeholder(&self, placeholder: &str, index: i32, val: i64) -> ejdb_sys::iwrc {
+    fn set_placeholder(&self, placeholder: &str, index: i32, val: i64) -> Result<(), ejdb_sys::iwrc> {
         let placeholder_str = std::ffi::CString::new(placeholder).unwrap();
 
         let rc = unsafe { ejdb_sys::jql_set_i64(self.q, placeholder_str.as_ptr(), index, val) };
 
         if rc != 0 {
             println!("failed to set placeholder {}", placeholder);
+            return Err(rc);
         }
-        rc
+        Ok(())
     }
 }
 
 impl SetPlaceholder<f64> for EJDBQuery {
-    fn set_placeholder(&self, placeholder: &str, index: i32, val: f64) -> ejdb_sys::iwrc {
+    fn set_placeholder(&self, placeholder: &str, index: i32, val: f64) -> Result<(), ejdb_sys::iwrc> {
         let placeholder_str = std::ffi::CString::new(placeholder).unwrap();
 
         let rc = unsafe { ejdb_sys::jql_set_f64(self.q, placeholder_str.as_ptr(), index, val) };
 
         if rc != 0 {
             println!("failed to set placeholder {}", placeholder);
+            return Err(rc);
         }
-        rc
+        Ok(())
     }
 }
 
 impl SetPlaceholder<bool> for EJDBQuery {
-    fn set_placeholder(&self, placeholder: &str, index: i32, val: bool) -> ejdb_sys::iwrc {
+    fn set_placeholder(&self, placeholder: &str, index: i32, val: bool) -> Result<(), ejdb_sys::iwrc> {
         let placeholder_str = std::ffi::CString::new(placeholder).unwrap();
 
         let rc = unsafe { ejdb_sys::jql_set_bool(self.q, placeholder_str.as_ptr(), index, val) };
 
         if rc != 0 {
             println!("failed to set placeholder {}", placeholder);
+            return Err(rc);
         }
-        rc
+        Ok(())
     }
 }
 
 impl SetPlaceholder<&str> for EJDBQuery {
-    fn set_placeholder(&self, placeholder: &str, index: i32, val: &str) -> ejdb_sys::iwrc {
+    fn set_placeholder(&self, placeholder: &str, index: i32, val: &str) -> Result<(), ejdb_sys::iwrc> {
         let placeholder_str = std::ffi::CString::new(placeholder).unwrap();
         let value_str = std::ffi::CString::new(val).unwrap();
 
@@ -147,7 +155,8 @@ impl SetPlaceholder<&str> for EJDBQuery {
 
         if rc != 0 {
             println!("failed to set placeholder {}", placeholder);
+            return Err(rc);
         }
-        rc
+        Ok(())
     }
 }
