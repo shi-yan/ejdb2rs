@@ -9,13 +9,9 @@ readme = "Readme.md"
 keywords = ["ejdb2", "database", "json", "bson", "ffi"]
 license = "MIT"
 include = [
-    "src/*.rs",
     "Cargo.toml",
+    "src/*.rs",
     "ejdb-sys/Cargo.toml",
-    "ejdb-sys/src/*.rs",
-    "ejdb-sys/ejdb-upstream/src",
-    "ejdb-sys/ejdb-upstream/CMakeLists.txt",
-    "ejdb-sys/ejdb-upstream/cmake",
 ]
 
 [badges]
