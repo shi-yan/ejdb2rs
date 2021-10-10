@@ -5,7 +5,7 @@ authors = ["Shi Yan <billconan@gmail.com>"]
 description = "Bindings for EJDB2, an single file embedded no-sql database"
 repository = "https://github.com/shi-yan/ejdb2rs"
 documentation = "https://github.com/shi-yan/ejdb2rs"
-readme = "Readme.md"
+readme = "README.md"
 keywords = ["ejdb2", "database", "json", "bson", "ffi"]
 license = "MIT"
 
