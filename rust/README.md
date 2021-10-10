@@ -7,7 +7,7 @@
 ```toml
 [dependencies]
 ejdb2-sys = "2.61.0"
-ejdb2 = "0.0.2"
+ejdb2 = "0.0.3"
 serde_json = "1.0"
 ```
 
