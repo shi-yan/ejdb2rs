@@ -610,12 +610,12 @@ impl EJDB {
     pub fn put<I: EJDBSerializable<O>, O>(
         &self,
         collection: &str,
-        json_str: &I,
+        json: &I,
         id: i64,
     ) -> Result<(), ejdb_sys::iwrc> {
         let collection_str = std::ffi::CString::new(collection).unwrap();
 
-        let mut jbl: ejdb_sys::JBL = match json_str.to_jbl() {
+        let mut jbl: ejdb_sys::JBL = match json.to_jbl() {
             Result::Ok(val) => val,
             Result::Err(err) => {
                 println!("json error: {}", EJDB::err_to_str(err));
@@ -646,11 +646,11 @@ impl EJDB {
     pub fn patch<I: EJDBSerializable<O>, O>(
         &self,
         collection: &str,
-        json_str: &I,
+        json: &I,
         id: i64,
     ) -> Result<(), ejdb_sys::iwrc> {
         let collection_str = std::ffi::CString::new(collection).unwrap();
-        let mut jbl: ejdb_sys::JBL = match json_str.to_jbl() {
+        let mut jbl: ejdb_sys::JBL = match json.to_jbl() {
             Result::Ok(val) => val,
             Result::Err(err) => {
                 println!("json error: {}", EJDB::err_to_str(err));
@@ -836,7 +836,7 @@ impl EJDB {
     pub fn exec<O: EJDBSerializable<O>>(
         &self,
         q: &EJDBQuery,
-        mut f: fn(doc: O) -> ejdb_sys::iwrc,
+        mut f: fn(id:i64, doc: O) -> ejdb_sys::iwrc,
     ) -> Result<(), ejdb_sys::iwrc> {
         let callback_ptr: *mut std::ffi::c_void = &mut f as *mut _ as *mut std::ffi::c_void;
 
@@ -875,7 +875,7 @@ unsafe extern "C" fn document_visitor<O: EJDBSerializable<O>>(
         }
     };
 
-    let data: &mut fn(O) -> ejdb_sys::iwrc = &mut *((*ctx).opaque as *mut fn(O) -> ejdb_sys::iwrc);
+    let data: &mut fn(i64, O) -> ejdb_sys::iwrc = &mut *((*ctx).opaque as *mut fn(i64, O) -> ejdb_sys::iwrc);
 
-    return data(result);
+    return data((*doc).id, result);
 }

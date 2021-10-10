@@ -27,19 +27,14 @@ fn main() {
 
     println!("get {}, {}",1, result);
 
-    //db.del(&String::from("test"), 1).unwrap();
-
-    //let result2:String = db.get(&String::from("test"), 1).unwrap();
-    
-    //println!("get after del {}, {}",1, result2);
-
-    let mut query: ejdbquery::EJDBQuery = ejdbquery::EJDBQuery::new("test", "/ = :age");
+    let mut query: ejdbquery::EJDBQuery = ejdbquery::EJDBQuery::new("test", "/* | limit :limit skip :skip ");
     query.init().unwrap();
 
-    query.set_placeholder("age", 0, 3 as i64).unwrap();
+    query.set_placeholder("limit", 0, 3 as i64).unwrap();
+    query.set_placeholder("skip", 0, 3 as i64).unwrap();
 
-    db.exec(&query, |doc: String| -> ejdb_sys::iwrc{
-        println!("in callback {}", doc);
+    db.exec(&query, |id: i64, doc: String| -> ejdb_sys::iwrc{
+        println!("in callback {} {}",id, doc);
         0
     }).unwrap();
 
