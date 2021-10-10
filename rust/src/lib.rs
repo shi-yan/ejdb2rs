@@ -1,15 +1,53 @@
 
 extern crate ejdb_sys;
-use ejdb_sys::ejdb_init;
+extern crate serde_json;
 
-fn test() {
+mod ejdb;
+mod ejdbquery;
 
-    let a = unsafe {
-        let rc = ejdb_init();
-        print!("{:?}", rc);
-        rc
-    };
+use ejdbquery::{SetPlaceholder, EJDBSerializable};
+use serde_json::json;
 
-    print!("{:?}", a);
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_db() -> Result<(), String> {
+        
+        ejdb::EJDB::init().unwrap();
+        let mut db = ejdb::EJDB::new();
     
+        db.open(&String::from("test.db")).unwrap();
+    
+        let data = json!({
+            "serde_key" : 32,
+            "test_val" : [1,2,3],
+            "nested" : { "test" : "str"}
+        });
+    
+        let id = db.put_new(&String::from("test").as_str(), &data).unwrap();
+    
+        let meta:serde_json::Value = db.info().unwrap();
+    
+        println!("db meta {}", meta);
+    
+        let result:String = db.get(&String::from("test"), id).unwrap();
+    
+        println!("get {}, {}",1, result);
+    
+        let mut query: ejdbquery::EJDBQuery = ejdbquery::EJDBQuery::new("test", "/* | limit :limit skip :skip ");
+        query.init().unwrap();
+    
+        query.set_placeholder("limit", 0, 3 as i64).unwrap();
+        query.set_placeholder("skip", 0, 3 as i64).unwrap();
+    
+        db.exec(&query, |id: i64, doc: String| -> ejdb_sys::iwrc{
+            println!("in callback {} {}",id, doc);
+            0
+        }).unwrap();
+
+        Ok(())
+    }
 }
