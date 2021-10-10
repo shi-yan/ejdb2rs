@@ -6,22 +6,26 @@
 
 ```toml
 [dependencies]
+ejdb2-sys = "2.61.0"
 ejdb2 = "0.0.2"
+serde_json = "1.0"
 ```
 
 ## Example
 
 ```rust
 extern crate serde_json;
+extern crate ejdb2;
+extern crate ejdb2_sys;
 
-mod ejdb;
-mod ejdbquery;
-use ejdbquery::{SetPlaceholder, EJDBSerializable};
+
+use ejdb2::ejdbquery::{EJDBQuery, SetPlaceholder};
+use ejdb2::ejdb::EJDB;
 use serde_json::json;
 
 fn main() {
-    ejdb::EJDB::init().unwrap();
-    let mut db = ejdb::EJDB::new();
+    EJDB::init().unwrap();
+    let mut db = EJDB::new();
 
     db.open(&String::from("test.db")).unwrap();
 
@@ -41,7 +45,7 @@ fn main() {
 
     println!("get {}, {}",1, result);
 
-    let mut query: ejdbquery::EJDBQuery = ejdbquery::EJDBQuery::new("test", "/* | limit :limit skip :skip ");
+    let mut query: EJDBQuery = EJDBQuery::new("test", "/* | limit :limit skip :skip ");
     query.init().unwrap();
 
     query.set_placeholder("limit", 0, 3 as i64).unwrap();
@@ -51,8 +55,20 @@ fn main() {
         println!("in callback {} {}",id, doc);
         0
     }).unwrap();
-
-   // db.close();
 }
 
 ```
+
+Internally EJDB uses JBL as a binary format for json. This rust binding supports serde_json <-> JBL conversion. If serde_json is not the json library you use, you could provide your own format convertor.
+
+Implement:
+
+```rust
+pub trait EJDBSerializable<T> {
+    fn from_jbl(jbl: ejdb2_sys::JBL) -> Result<T, ejdb2_sys::iwrc> ;
+
+    fn to_jbl(&self) -> Result<ejdb2_sys::JBL, ejdb2_sys::iwrc>;
+}
+```
+
+This binding also supports convertion between a string and a JBL. You can also serialize your format into a json string and convert it to JBL. But this will be slower. 
