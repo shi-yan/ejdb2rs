@@ -2,8 +2,8 @@
 extern crate ejdb2_sys;
 extern crate serde_json;
 
-mod ejdb;
-mod ejdbquery;
+pub mod ejdb;
+pub mod ejdbquery;
 
 use ejdbquery::{SetPlaceholder, EJDBSerializable};
 use serde_json::json;
