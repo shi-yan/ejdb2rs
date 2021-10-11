@@ -10,7 +10,7 @@ keywords = ["ejdb2", "database", "json", "bson", "ffi"]
 license = "MIT"
 
 [badges]
-maintenance = { status = "looking-for-maintainer" }
+maintenance = { status = "experimental" }
 
 [lib]
 name = "ejdb2"
