@@ -493,7 +493,9 @@ impl EJDB {
             ejdb2_sys::iw_ecode_IW_ERROR_READONLY => "Resource is readonly.",
             ejdb2_sys::iw_ecode_IW_ERROR_ALREADY_OPENED => "Resource is already opened.",
             ejdb2_sys::iw_ecode_IW_ERROR_THREADING => "Threading error.",
-            ejdb2_sys::iw_ecode_IW_ERROR_THREADING_ERRNO => "Threading error with errno status set.",
+            ejdb2_sys::iw_ecode_IW_ERROR_THREADING_ERRNO => {
+                "Threading error with errno status set."
+            }
             ejdb2_sys::iw_ecode_IW_ERROR_ASSERTION => "Generic assertion error.",
             ejdb2_sys::iw_ecode_IW_ERROR_INVALID_HANDLE => "Invalid HANDLE value.",
             ejdb2_sys::iw_ecode_IW_ERROR_OUT_OF_BOUNDS => "Invalid bounds specified.",
@@ -597,7 +599,8 @@ impl EJDB {
         };
 
         let mut id: i64 = 0;
-        let rc4 = unsafe { ejdb2_sys::ejdb_put_new(self.db, collection_str.as_ptr(), jbl, &mut id) };
+        let rc4 =
+            unsafe { ejdb2_sys::ejdb_put_new(self.db, collection_str.as_ptr(), jbl, &mut id) };
 
         if rc4 != 0 {
             println!("failed to put: {}", EJDB::err_to_str(rc4));
@@ -836,9 +839,9 @@ impl EJDB {
     pub fn exec<O: EJDBSerializable<O>>(
         &self,
         q: &EJDBQuery,
-        mut f: fn(id:i64, doc: O) -> ejdb2_sys::iwrc,
+        f: &mut Vec<(i64, O)>,
     ) -> Result<(), ejdb2_sys::iwrc> {
-        let callback_ptr: *mut std::ffi::c_void = &mut f as *mut _ as *mut std::ffi::c_void;
+        let callback_ptr: *mut std::ffi::c_void = f as *mut _ as *mut std::ffi::c_void;
 
         let mut ux = ejdb2_sys::EJDB_EXEC {
             db: self.db,
@@ -853,7 +856,7 @@ impl EJDB {
         };
 
         let rc3 = unsafe { ejdb2_sys::ejdb_exec(&mut ux) };
-
+        println!("after exec");
         if rc3 != 0 {
             println!("unable to exec {}", rc3);
             return Err(rc3);
@@ -875,7 +878,7 @@ unsafe extern "C" fn document_visitor<O: EJDBSerializable<O>>(
         }
     };
 
-    let data: &mut fn(i64, O) -> ejdb2_sys::iwrc = &mut *((*ctx).opaque as *mut fn(i64, O) -> ejdb2_sys::iwrc);
-
-    return data((*doc).id, result);
+    let data: &mut Vec<(i64, O)> = &mut *((*ctx).opaque as *mut Vec<(i64, O)>);
+    data.push(((*doc).id, result));
+    0
 }

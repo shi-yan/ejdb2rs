@@ -7,7 +7,7 @@
 ```toml
 [dependencies]
 ejdb2-sys = "2.61.0"
-ejdb2 = "0.0.3"
+ejdb2 = "0.0.4"
 serde_json = "1.0"
 ```
 
@@ -51,10 +51,14 @@ fn main() {
     query.set_placeholder("limit", 0, 3 as i64).unwrap();
     query.set_placeholder("skip", 0, 3 as i64).unwrap();
 
-    db.exec(&query, |id: i64, doc: String| -> ejdb2_sys::iwrc{
-        println!("in callback {} {}",id, doc);
-        0
-    }).unwrap();
+    let mut result = Vec::<(i64, serde_json::Value)>::new();
+
+    db.exec::<serde_json::Value>(&query, &mut result).unwrap();
+    println!("after exec {}", result.len());
+
+    for (id, r) in result {
+        println!("id {}, value {}", id, r);
+    }
 }
 
 ```

@@ -5,7 +5,9 @@ extern crate serde_json;
 pub mod ejdb;
 pub mod ejdbquery;
 
-use ejdbquery::{SetPlaceholder, EJDBSerializable};
+pub use ejdbquery::{SetPlaceholder, EJDBSerializable, EJDBQuery};
+pub use ejdb::EJDB;
+
 use serde_json::json;
 
 
@@ -42,11 +44,15 @@ mod tests {
     
         query.set_placeholder("limit", 0, 3 as i64).unwrap();
         query.set_placeholder("skip", 0, 3 as i64).unwrap();
+        
+        let mut result = Vec::<(i64, serde_json::Value)>::new();
+
+        db.exec::<serde_json::Value>(&query, &mut result).unwrap();
+        println!("after exec {}", result.len());
     
-        db.exec(&query, |id: i64, doc: String| -> ejdb2_sys::iwrc{
-            println!("in callback {} {}",id, doc);
-            0
-        }).unwrap();
+        for (id, r) in result {
+            println!("id {}, value {}", id, r);
+        }
 
         Ok(())
     }
