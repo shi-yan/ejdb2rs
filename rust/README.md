@@ -7,7 +7,7 @@
 ```toml
 [dependencies]
 ejdb2-sys = "2.61.0"
-ejdb2 = "0.0.4"
+ejdb2 = "0.0.5"
 serde_json = "1.0"
 ```
 
@@ -27,7 +27,7 @@ fn main() {
     EJDB::init().unwrap();
     let mut db = EJDB::new();
 
-    db.open(&String::from("test.db")).unwrap();
+    db.open("test.db").unwrap();
 
     let data = json!({
         "serde_key" : 32,
@@ -35,13 +35,13 @@ fn main() {
         "nested" : { "test" : "str"}
     });
 
-    let id = db.put_new(&String::from("test").as_str(), &data).unwrap();
+    let id = db.put_new("test", &data).unwrap();
 
     let meta:serde_json::Value = db.info().unwrap();
 
     println!("db meta {}", meta);
 
-    let result:String = db.get(&String::from("test"), id).unwrap();
+    let result:String = db.get("test", id).unwrap();
 
     println!("get {}, {}",1, result);
 
