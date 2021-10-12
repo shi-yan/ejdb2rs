@@ -1,8 +1,6 @@
 extern crate ejdb2_sys;
-extern crate scopeguard;
 extern crate serde_json;
 
-use self::scopeguard::defer;
 use ejdbquery::EJDBQuery;
 use ejdbquery::EJDBSerializable;
 
