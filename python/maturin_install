@@ -1,0 +1,6 @@
+#!/bin/bash
+
+for PYBIN in /opt/python/cp3[6789]*/bin; do
+    "${PYBIN}/pip" install maturin
+    "${PYBIN}/maturin" build -m Cargo.toml -i "${PYBIN}/python" --release --manylinux 2014
+done
