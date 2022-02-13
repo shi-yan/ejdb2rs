@@ -1,3 +1,5 @@
 *.db
 *.db-wal
 *.lock
+rust/target/
+rust/ejdb-sys/target/

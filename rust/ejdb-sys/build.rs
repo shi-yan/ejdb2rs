@@ -13,8 +13,9 @@ fn main() {
     let dst = Config::new("ejdb-upstream")
         .cflag("-w")
         .profile("Debug")
-        .define("BUILD_SAMPLES", "OFF")
+        .define("BUILD_EXAMPLES", "OFF")
         .define("BUILD_SHARED_LIBS", "OFF")
+        .define("ENABLE_HTTP", "OFF")
         .build();
 
     Command::new("make").status().expect("failed to make!");
